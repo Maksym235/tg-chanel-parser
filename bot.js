@@ -13,7 +13,7 @@ const apiHash = process.env.API_HASH;
 const sourceChannel = process.env.SOURCE_CHANNEL;
 const targetChat = process.env.TARGET_CHAT;
 
-const sessionPath = path.join(__dirname, "session.txt");
+const stringSession = new StringSession(process.env.STRING_SESSION);
 const logsDir = path.join(__dirname, "logs");
 fs.ensureDirSync(logsDir);
 
@@ -32,16 +32,16 @@ const logger = winston.createLogger({
   ],
 });
 
-// === 📦 Сесія ===
-let stringSession;
-if (fs.existsSync(sessionPath)) {
-  const saved = fs.readFileSync(sessionPath, "utf8");
-  stringSession = new StringSession(saved);
-  logger.info("✅ Використовую збережену сесію.");
-} else {
-  stringSession = new StringSession("");
-  logger.info("🆕 Нова сесія.");
-}
+// // === 📦 Сесія ===
+// let stringSession;
+// if (fs.existsSync(sessionPath)) {
+//   const saved = fs.readFileSync(sessionPath, "utf8");
+//   stringSession = new StringSession(saved);
+//   logger.info("✅ Використовую збережену сесію.");
+// } else {
+//   stringSession = new StringSession("");
+//   logger.info("🆕 Нова сесія.");
+// }
 
 // === 🤖 Основна логіка ===
 (async () => {
@@ -49,17 +49,9 @@ if (fs.existsSync(sessionPath)) {
     connectionRetries: 5,
   });
 
-  await client.start({
-    phoneNumber: async () => await input.text("📱 Введи номер телефону: "),
-    password: async () => await input.text("🔐 Введи пароль (2FA, якщо є): "),
-    phoneCode: async () => await input.text("📩 Введи код з Telegram: "),
-    onError: (err) => logger.error("❌ Помилка авторизації: " + err),
-  });
-
-  // Збереження сесії
-  const sessionStr = client.session.save();
-  fs.writeFileSync(sessionPath, sessionStr);
-  logger.info("💾 Сесію збережено в session.txt");
+  console.log("🟢 Запуск клієнта...");
+  await client.start();
+  console.log("✅ Авторизовано! Слухаю канали");
 
   logger.info("🚀 Бот запущений.");
   const channels = sourceChannel.split(",").map(c => c.trim());
@@ -73,20 +65,20 @@ if (fs.existsSync(sessionPath)) {
         if (text.toLowerCase().includes("26" | "колеса")) {
           const chat = await message.getChat();
           const channelTitle = chat?.title || "Невідомий канал";
-    
+
           const formattedMessage = `📣 *${channelTitle}*\n\n${text}`;
-          
+
           await client.sendMessage(targetChat, {
             message: formattedMessage,
           });
-    
+
           logger.info("➡️ Переслано:", formattedMessage);
         }
       } catch (err) {
         logger.error("❌ Помилка обробки повідомлення: " + err.message);
       }
     },
-   
-   new NewMessage({chats: channels})
+
+    new NewMessage({ chats: channels })
   );
 })();
