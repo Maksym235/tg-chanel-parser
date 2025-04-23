@@ -62,7 +62,15 @@ const logger = winston.createLogger({
         if (!message || !message.message) return;
         const text = message.message
         // if (text.toLowerCase().includes("вілсет" | "26" | "колеса" | "переднє колесо" | "заднє колесо" | "колеса вілсет")) {
-        if (text.toLowerCase().includes("26" | "колеса")) {
+        const keywords = [
+          "вілсет",
+          "26",
+          "колеса",
+          "переднє колесо",
+          "заднє колесо",
+          "колеса вілсет"
+        ];
+        if (keywords.some((word) => text.toLowerCase().includes(word))) {
           const chat = await message.getChat();
           const channelTitle = chat?.title || "Невідомий канал";
 
